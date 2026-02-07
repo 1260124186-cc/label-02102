@@ -58,17 +58,27 @@ import VideoPlayer from './VideoPlayer.vue'
 import ControlPanel from './ControlPanel.vue'
 import TimeRangeInput from './TimeRangeInput.vue'
 import ToastMessage from './ToastMessage.vue'
+import { useVideoSync } from '../composables/useVideoSync'
 
 const player1Ref = ref(null)
 const player2Ref = ref(null)
-const video1 = ref(null)
-const video2 = ref(null)
 
-const isPlaying = ref(false)
-const isLoading = ref(false)
-const currentTime = ref(0)
-const startTime = ref(0)
-const endTime = ref(0)
+// 使用视频同步逻辑
+const {
+  isPlaying,
+  isLoading,
+  currentTime,
+  startTime,
+  endTime,
+  setVideo1,
+  setVideo2,
+  play: syncPlay,
+  pause,
+  reset,
+  updateCurrentTime,
+  checkEndTime,
+  setTimeRange
+} = useVideoSync()
 
 const toast = reactive({
   show: false,
@@ -87,18 +97,18 @@ const showError = (message) => {
 }
 
 const onVideo1Ready = (videoEl) => {
-  video1.value = videoEl
+  setVideo1(videoEl)
   showToast('视频 A 加载完成', 'success')
 }
 
 const onVideo2Ready = (videoEl) => {
-  video2.value = videoEl
+  setVideo2(videoEl)
   showToast('视频 B 加载完成', 'success')
 }
 
 const onTimeUpdate = (time) => {
-  currentTime.value = time
-  if (endTime.value > 0 && time >= endTime.value) {
+  updateCurrentTime(time)
+  if (checkEndTime(time)) {
     pause()
     reset()
     showToast('播放完成', 'info')
@@ -106,53 +116,14 @@ const onTimeUpdate = (time) => {
 }
 
 const onApplyTimeRange = ({ start, end }) => {
-  startTime.value = start
-  endTime.value = end
+  setTimeRange(start, end)
   reset()
   showToast(`时间范围已设置: ${start}s - ${end > 0 ? end + 's' : '结束'}`, 'success')
 }
 
 const play = async () => {
-  if (!video1.value && !video2.value) {
-    showToast('请先选择至少一个视频', 'warning')
-    return
-  }
-
-  isLoading.value = true
-
-  try {
-    const promises = []
-
-    if (video1.value) {
-      video1.value.currentTime = startTime.value
-      promises.push(video1.value.play())
-    }
-    if (video2.value) {
-      video2.value.currentTime = startTime.value
-      promises.push(video2.value.play())
-    }
-
-    await Promise.all(promises)
-    isPlaying.value = true
-    showToast('开始同步播放', 'success')
-  } catch (err) {
-    showToast('播放失败，请检查视频文件', 'error')
-  } finally {
-    isLoading.value = false
-  }
-}
-
-const pause = () => {
-  if (video1.value) video1.value.pause()
-  if (video2.value) video2.value.pause()
-  isPlaying.value = false
-}
-
-const reset = () => {
-  pause()
-  if (video1.value) video1.value.currentTime = startTime.value
-  if (video2.value) video2.value.currentTime = startTime.value
-  currentTime.value = startTime.value
+  const result = await syncPlay()
+  showToast(result.message, result.success ? 'success' : 'warning')
 }
 </script>
 

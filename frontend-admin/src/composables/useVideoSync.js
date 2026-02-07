@@ -1,93 +1,109 @@
-import { ref, watch } from 'vue'
+import { ref } from 'vue'
 
+/**
+ * 视频同步播放逻辑
+ * 提供双视频同步播放、暂停、重置等功能
+ */
 export function useVideoSync() {
-  const video1Ref = ref(null)
-  const video2Ref = ref(null)
+  const video1 = ref(null)
+  const video2 = ref(null)
   const isPlaying = ref(false)
+  const isLoading = ref(false)
   const currentTime = ref(0)
   const startTime = ref(0)
   const endTime = ref(0)
-  const isLoading = ref(false)
+
+  // 设置视频元素引用
+  const setVideo1 = (videoEl) => {
+    video1.value = videoEl
+  }
+
+  const setVideo2 = (videoEl) => {
+    video2.value = videoEl
+  }
+
+  // 检查是否有可用视频
+  const hasVideo = () => {
+    return video1.value || video2.value
+  }
 
   // 同步播放
-  const play = () => {
-    if (!video1Ref.value && !video2Ref.value) return
+  const play = async () => {
+    if (!hasVideo()) {
+      return { success: false, message: '请先选择至少一个视频' }
+    }
 
     isLoading.value = true
-    const promises = []
 
-    if (video1Ref.value) {
-      video1Ref.value.currentTime = startTime.value
-      promises.push(video1Ref.value.play())
-    }
-    if (video2Ref.value) {
-      video2Ref.value.currentTime = startTime.value
-      promises.push(video2Ref.value.play())
-    }
+    try {
+      const promises = []
 
-    Promise.all(promises)
-      .then(() => {
-        isPlaying.value = true
-        isLoading.value = false
-      })
-      .catch(() => {
-        isLoading.value = false
-      })
+      if (video1.value) {
+        video1.value.currentTime = startTime.value
+        promises.push(video1.value.play())
+      }
+      if (video2.value) {
+        video2.value.currentTime = startTime.value
+        promises.push(video2.value.play())
+      }
+
+      await Promise.all(promises)
+      isPlaying.value = true
+      return { success: true, message: '开始同步播放' }
+    } catch (err) {
+      return { success: false, message: '播放失败，请检查视频文件' }
+    } finally {
+      isLoading.value = false
+    }
   }
 
   // 同步暂停
   const pause = () => {
-    if (video1Ref.value) video1Ref.value.pause()
-    if (video2Ref.value) video2Ref.value.pause()
+    if (video1.value) video1.value.pause()
+    if (video2.value) video2.value.pause()
     isPlaying.value = false
   }
 
   // 重置到起始时间
   const reset = () => {
     pause()
-    if (video1Ref.value) video1Ref.value.currentTime = startTime.value
-    if (video2Ref.value) video2Ref.value.currentTime = startTime.value
+    if (video1.value) video1.value.currentTime = startTime.value
+    if (video2.value) video2.value.currentTime = startTime.value
     currentTime.value = startTime.value
   }
 
-  // 同步跳转
-  const seek = (time) => {
-    const targetTime = Math.max(startTime.value, Math.min(time, endTime.value || Infinity))
-    if (video1Ref.value) video1Ref.value.currentTime = targetTime
-    if (video2Ref.value) video2Ref.value.currentTime = targetTime
-    currentTime.value = targetTime
+  // 更新当前时间
+  const updateCurrentTime = (time) => {
+    currentTime.value = time
   }
 
-  // 时间更新处理
-  const onTimeUpdate = (time) => {
-    currentTime.value = time
-    // 检查是否到达结束时间
-    if (endTime.value > 0 && time >= endTime.value) {
-      pause()
-      reset()
-    }
+  // 检查是否到达结束时间
+  const checkEndTime = (time) => {
+    return endTime.value > 0 && time >= endTime.value
   }
 
   // 设置时间范围
   const setTimeRange = (start, end) => {
     startTime.value = Math.max(0, start)
     endTime.value = end > start ? end : 0
-    reset()
   }
 
   return {
-    video1Ref,
-    video2Ref,
+    video1,
+    video2,
     isPlaying,
+    isLoading,
     currentTime,
     startTime,
     endTime,
-    isLoading,
+    setVideo1,
+    setVideo2,
+    hasVideo,
     play,
     pause,
     reset,
-    seek,
-    onTimeUpdate,
+    updateCurrentTime,
+    checkEndTime,
     setTimeRange
   }
 }
