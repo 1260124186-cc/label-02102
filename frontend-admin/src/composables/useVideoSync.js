@@ -27,10 +27,19 @@ export function useVideoSync() {
     return video1.value || video2.value
   }
 
+  // 检查是否设置了时间范围
+  const hasTimeRange = () => {
+    return startTime.value > 0 || endTime.value > 0
+  }
+
   // 同步播放
   const play = async () => {
     if (!hasVideo()) {
       return { success: false, message: '请先选择至少一个视频' }
+    }
+
+    if (!hasTimeRange()) {
+      return { success: false, message: '请先设置播放起始时间' }
     }
 
     isLoading.value = true
