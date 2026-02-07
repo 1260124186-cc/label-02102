@@ -1,0 +1,9 @@
+services:
+  frontend-admin:
+    build:
+      context: ./frontend-admin
+      dockerfile: Dockerfile
+    ports:
+      - "8081:80"
+    restart: unless-stopped
+    container_name: video-compare-frontend-admin
