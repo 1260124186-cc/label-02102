@@ -34,8 +34,8 @@
         <span class="control-panel__progress-label">播放进度</span>
         <span class="control-panel__progress-time">
           {{ formatTime(currentTime) }}
-          <template v-if="endTime > 0">
-            / {{ formatTime(endTime) }}
+          <template v-if="effectiveEndTime > 0">
+            / {{ formatTime(effectiveEndTime) }}
           </template>
         </span>
       </div>
@@ -57,14 +57,24 @@ const props = defineProps({
   isLoading: { type: Boolean, default: false },
   currentTime: { type: Number, default: 0 },
   startTime: { type: Number, default: 0 },
-  endTime: { type: Number, default: 0 }
+  endTime: { type: Number, default: 0 },
+  duration: { type: Number, default: 0 }
 })
 
 const emit = defineEmits(['play', 'pause', 'reset'])
 
+// 计算实际的结束时间（优先使用设置的 endTime，否则使用视频总时长）
+const effectiveEndTime = computed(() => {
+  if (props.endTime > 0) return props.endTime
+  if (props.duration > 0) return props.duration
+  return 0
+})
+
 const progressPercent = computed(() => {
-  if (props.endTime <= 0) return 0
-  const range = props.endTime - props.startTime
+  const end = effectiveEndTime.value
+  if (end <= 0) return 0
+  const range = end - props.startTime
+  if (range <= 0) return 0
   const current = props.currentTime - props.startTime
   return Math.min(100, Math.max(0, (current / range) * 100))
 })

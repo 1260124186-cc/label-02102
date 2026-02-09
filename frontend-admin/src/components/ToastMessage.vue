@@ -25,7 +25,7 @@
 </template>
 
 <script setup>
-import { ref, watch } from 'vue'
+import { ref, watch, onUnmounted } from 'vue'
 
 const props = defineProps({
   message: { type: String, default: '' },
@@ -37,25 +37,45 @@ const props = defineProps({
 const emit = defineEmits(['close'])
 
 const visible = ref(false)
+let closeTimer = null
+
+// 清除定时器
+const clearCloseTimer = () => {
+  if (closeTimer) {
+    clearTimeout(closeTimer)
+    closeTimer = null
+  }
+}
 
 watch(() => props.show, (newVal) => {
   if (newVal) {
+    // 清除之前的定时器，避免闪烁
+    clearCloseTimer()
+
     visible.value = true
-    setTimeout(() => {
+    closeTimer = setTimeout(() => {
       visible.value = false
       emit('close')
     }, props.duration)
   }
 }, { immediate: true })
+
+// 组件卸载时清理
+onUnmounted(() => {
+  clearCloseTimer()
+})
 </script>
 
 <style scoped>
 .toast-wrapper {
   position: fixed;
   top: var(--spacing-lg);
-  left: 50%;
-  transform: translateX(-50%);
+  left: 0;
+  right: 0;
+  display: flex;
+  justify-content: center;
   z-index: 9999;
+  pointer-events: none;
 }
 
 .toast {
@@ -68,6 +88,7 @@ watch(() => props.show, (newVal) => {
   box-shadow: var(--shadow-lg);
   font-size: var(--font-size-sm);
   border: 1px solid var(--border-color);
+  pointer-events: auto;
 }
 
 .toast--success {

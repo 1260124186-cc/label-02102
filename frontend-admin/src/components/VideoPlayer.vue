@@ -94,7 +94,7 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, onUnmounted } from 'vue'
 
 const props = defineProps({
   title: { type: String, default: '视频' }
@@ -111,22 +111,40 @@ const duration = ref(0)
 const currentTime = ref(0)
 const isBuffering = ref(false)
 
+// 保存当前的 ObjectURL 以便释放
+let currentObjectUrl = null
+
 const formatTime = (seconds) => {
   const mins = Math.floor(seconds / 60)
   const secs = Math.floor(seconds % 60)
   return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`
 }
 
+// 释放之前的 ObjectURL
+const revokeObjectUrl = () => {
+  if (currentObjectUrl) {
+    URL.revokeObjectURL(currentObjectUrl)
+    currentObjectUrl = null
+  }
+}
+
 const onFileSelect = (e) => {
   const file = e.target.files[0]
   if (file) {
+    // 释放之前的 ObjectURL
+    revokeObjectUrl()
+
     fileName.value = file.name
-    videoSrc.value = URL.createObjectURL(file)
+    currentObjectUrl = URL.createObjectURL(file)
+    videoSrc.value = currentObjectUrl
   }
 }
 
 const loadUrl = () => {
   if (urlInput.value.trim()) {
+    // 释放之前的 ObjectURL（如果有）
+    revokeObjectUrl()
+
     videoSrc.value = urlInput.value.trim()
     fileName.value = ''
   }
@@ -149,6 +167,11 @@ const onTimeUpdate = () => {
 const onError = () => {
   emit('error', '视频加载失败，请检查文件或 URL 是否有效')
 }
+
+// 组件卸载时释放 ObjectURL
+onUnmounted(() => {
+  revokeObjectUrl()
+})
 
 defineExpose({
   getVideoElement: () => videoRef.value

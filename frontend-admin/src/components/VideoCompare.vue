@@ -5,7 +5,6 @@
         ref="player1Ref"
         title="视频 A"
         @ready="onVideo1Ready"
-        @timeupdate="onTimeUpdate"
         @error="showError"
       />
       <VideoPlayer
@@ -37,6 +36,7 @@
         :currentTime="currentTime"
         :startTime="startTime"
         :endTime="endTime"
+        :duration="duration"
         @play="play"
         @pause="pause"
         @reset="reset"
@@ -70,14 +70,14 @@ const {
   currentTime,
   startTime,
   endTime,
+  duration,
   setVideo1,
   setVideo2,
   play: syncPlay,
   pause,
   reset,
-  updateCurrentTime,
-  checkEndTime,
-  setTimeRange
+  setTimeRange,
+  onPlaybackEnd
 } = useVideoSync()
 
 const toast = reactive({
@@ -96,6 +96,11 @@ const showError = (message) => {
   showToast(message, 'error')
 }
 
+// 注册播放结束回调
+onPlaybackEnd(() => {
+  showToast('播放完成', 'info')
+})
+
 const onVideo1Ready = (videoEl) => {
   setVideo1(videoEl)
   showToast('视频 A 加载完成', 'success')
@@ -104,15 +109,6 @@ const onVideo1Ready = (videoEl) => {
 const onVideo2Ready = (videoEl) => {
   setVideo2(videoEl)
   showToast('视频 B 加载完成', 'success')
-}
-
-const onTimeUpdate = (time) => {
-  updateCurrentTime(time)
-  if (checkEndTime(time)) {
-    pause()
-    reset()
-    showToast('播放完成', 'info')
-  }
 }
 
 const onApplyTimeRange = ({ start, end }) => {
