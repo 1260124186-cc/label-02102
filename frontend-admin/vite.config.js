@@ -6,5 +6,14 @@ export default defineConfig({
   server: {
     host: '0.0.0.0',
     port: 8081
+  },
+  test: {
+    globals: true,
+    environment: 'happy-dom',
+    include: ['**/*.test.js'],
+    coverage: {
+      provider: 'v8',
+      reporter: ['text', 'json', 'html']
+    }
   }
 })
