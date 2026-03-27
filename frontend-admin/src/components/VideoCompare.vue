@@ -121,6 +121,16 @@ const play = async () => {
   const result = await syncPlay()
   showToast(result.message, result.success ? 'success' : 'warning')
 }
+
+defineExpose({
+  showToast,
+  showError,
+  onVideo1Ready,
+  onVideo2Ready,
+  onApplyTimeRange,
+  reset,
+  pause
+})
 </script>
 
 <style scoped>
