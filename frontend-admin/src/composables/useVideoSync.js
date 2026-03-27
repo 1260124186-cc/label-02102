@@ -43,7 +43,7 @@ export function useVideoSync() {
 
   // 检查是否有可用视频
   const hasVideo = () => {
-    return video1.value || video2.value
+    return !!(video1.value || video2.value)
   }
 
   // 检查是否设置了结束时间
@@ -219,6 +219,14 @@ export function useVideoSync() {
     pause,
     reset,
     setTimeRange,
-    onPlaybackEnd
+    onPlaybackEnd,
+    hasEndTime,
+    getMaxCurrentTime,
+    getMasterTime,
+    correctDrift,
+    checkAndHandleEndTime,
+    updateDuration,
+    SYNC_INTERVAL,
+    DRIFT_THRESHOLD
   }
 }
