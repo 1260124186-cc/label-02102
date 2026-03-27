@@ -219,6 +219,9 @@ export function useVideoSync() {
     pause,
     reset,
     setTimeRange,
-    onPlaybackEnd
+    onPlaybackEnd,
+    correctDrift,
+    syncLoop,
+    getMasterTime
   }
 }
